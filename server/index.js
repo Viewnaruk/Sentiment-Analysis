@@ -307,7 +307,7 @@ app.get("/getStatsByPlace", async (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('*', (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -321,6 +321,30 @@ app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
 
+
+const FASTAPI_URL = process.env.FASTAPI_URL || 'http://127.0.0.1:9000';
+app.get("/analyze", async (req, res) => {
+  try {
+    const reviews = await ReviewModel.find({}).limit(10);
+    console.log("Number of reviews fetched:", reviews.length);
+    const results = [];
+
+    for (const r of reviews) {
+      try {
+        const response = await axios.post(`${FASTAPI_URL}/predict`, {
+          review_id: r._id
+        });
+        results.push(response.data);
+      } catch (err) {
+        console.error("Error analyzing review:", r._id, err.message);
+      }
+    }
+
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 app.post('/addReview', async (req, res) => {
@@ -353,7 +377,7 @@ app.post('/addReview', async (req, res) => {
     };
 
     // ส่งรีวิวไป FastAPI เพื่อวิเคราะห์
-    const predictRes = await axios.post('http://127.0.0.1:9000/predict', {
+    const predictRes = await axios.post(`${FASTAPI_URL}/predict`, {
       review: Review
     });
     console.log("Predict result from FastAPI:", predictRes.data);
