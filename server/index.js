@@ -305,10 +305,13 @@ app.get("/getStatsByPlace", async (req, res) => {
 
 // });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// ส่ง index.html สำหรับ route /
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const filePath = path.join(__dirname, '..', 'public', 'index.html');
+  console.log('Serving file:', filePath); // Debug path
+  res.sendFile(filePath);
 });
 
 
